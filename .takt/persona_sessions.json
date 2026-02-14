@@ -1,12 +1,12 @@
 {
   "personaSessions": {
-    "planner": "ses_3a30569b0ffeNtheuOg5ungW5p",
-    "coder": "ses_3a303d36cffeZQXLUknUa6LRJT",
-    "ai-antipattern-reviewer": "ses_3a301d260ffeRmoynzKZz93eO6",
-    "architecture-reviewer": "ses_3a2fda073ffezbOR7am2Fns656",
-    "qa-reviewer": "ses_3a2fda073ffdiCfmZoHZ3Ip5Lp",
-    "supervisor": "ses_3a2fabf1effeYe3x6nyHKBJaiz"
+    "planner": "ses_3a2f6d3beffezHNzyYqSI8YDGD",
+    "coder": "ses_3a2ef55e7ffeliEkKlAEITXsVg",
+    "ai-antipattern-reviewer": "ses_3a2f26084ffeQyzwN0eLFK7DrQ",
+    "architecture-reviewer": "ses_3a2eb4094ffelIQ5fMJ8cYeeZv",
+    "qa-reviewer": "ses_3a2eb4094ffdEC8U1ftGJjYTdF",
+    "supervisor": "ses_3a2e5ba89ffeX9H0AROkmciy7v"
   },
-  "updatedAt": "2026-02-14T16:40:59.134Z",
+  "updatedAt": "2026-02-14T17:03:59.966Z",
   "provider": "opencode"
 }
