@@ -1,0 +1,8 @@
+{
+  "status": "success",
+  "taskResult": "[search-mode]\nMAXIMIZE SEARCH EFFORT. Launch multiple background agents IN PARALLEL:\n- explore agents (codebase patterns, file structures, ast-grep)\n- librarian agents (remote repos, official docs, GitHub examples)\nPlus direct tools: Grep, ripgrep (rg), ast-grep (sg)\nNEVER stop at first result - be exhaustive.\n\n[analyze-mode]\nANALYSIS MODE. Gather context before diving deep:\n\nCONTEXT GATHERING (parallel):\n- 1-2 explore agents (codebase patterns, implementations)\n- 1-2 librarian agents (if external library involved)\n- Direct tools: Grep, AST-grep, LSP for targeted searches\n\nIF COMPLEX - DO NOT STRUGGLE ALONE. Consult specialists:\n- **Oracle**: Conventional problems (architecture, debugging, complex logic)\n- **Artistry**: Non-conventional problems (different approach needed)\n\nSYNTHESIZE findings before proceeding.\n\n---\n\n\n# TAKT\n\nあなたはTAKT（AIエージェントオーケストレーションツール）の一部として動作しています。\n\n## TAKTの仕組み\n- **ピース**: 複数のムーブメントを組み合わせた処理フロー（実装→レビュー→修正など）\n- **ムーブメント**: 個別のエージェント実行単位（あなたが今担当している部分）\n- **あなたの役割**...",
+  "timestamp": "2026-02-14T16:41:42.317Z",
+  "pieceName": "default",
+  "taskContent": "READMEを作成して",
+  "lastMovement": "supervise"
+}
