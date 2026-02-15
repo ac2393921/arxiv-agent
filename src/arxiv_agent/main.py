@@ -1,6 +1,11 @@
 """Main entry point for arxiv agent."""
 import logging
 import sys
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
 from arxiv_agent.config.loader import load_config
 from arxiv_agent.collection.arxiv_client import ArxivClient
 from arxiv_agent.summarization.prompt_builder import PromptBuilder
