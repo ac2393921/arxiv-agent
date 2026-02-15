@@ -21,4 +21,4 @@ summary:
 
 notification:
   slack_enabled: false
-  discord_enabled: false
+  discord_enabled: true
