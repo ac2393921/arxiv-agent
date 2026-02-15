@@ -1,7 +1,12 @@
 {
   "personaSessions": {
-    "interactive": "2f41299e-d531-432b-8d13-6a73ed410e6d"
+    "planner": "ses_3a2f6d3beffezHNzyYqSI8YDGD",
+    "coder": "ses_3a2ef55e7ffeliEkKlAEITXsVg",
+    "ai-antipattern-reviewer": "ses_3a2f26084ffeQyzwN0eLFK7DrQ",
+    "architecture-reviewer": "ses_3a2eb4094ffelIQ5fMJ8cYeeZv",
+    "qa-reviewer": "ses_3a2eb4094ffdEC8U1ftGJjYTdF",
+    "supervisor": "ses_3a2e5ba89ffeX9H0AROkmciy7v"
   },
-  "updatedAt": "2026-02-14T07:29:00.666Z",
-  "provider": "claude"
+  "updatedAt": "2026-02-14T17:03:59.966Z",
+  "provider": "opencode"
 }

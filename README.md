@@ -1,103 +1,170 @@
-# arXiv Paper Summary Agent
+# arxiv-agent
 
-arXivから最新論文を収集し、Gemini APIで日本語要約を生成してSlack/Discordに通知するPythonエージェントです。
+arXiv論文を自動収集・要約・通知するPythonアプリケーション
 
-## Features
+## 機能
 
-- arXiv APIで論文を自動収集
-- Google Gemini APIで日本語要約を生成
-- Slack/Discord Webhookで通知
-- GitHub Actionsで毎日定時実行
+- **論文収集**: arXiv APIを使用して、指定したカテゴリ・キーワードで論文を検索
+- **要約生成**: Gemini APIを使用して、論文の要約を日本語で生成
+- **通知**: SlackまたはDiscordへ要約を送信
 
-## Requirements
+## 前提条件
 
-- Python 3.11 or 3.12 (recommended for stable library support)
-- Note: Python 3.13+ may have compatibility issues with some dependencies
+- Python 3.10以上
+- Gemini APIキー（必須）
+- Slack Webhook URL（任意、Slack通知使用時）
+- Discord Webhook URL（任意、Discord通知使用時）
 
-## Setup
+## セットアップ
 
-### 1. Install dependencies
+1. リポジトリをクローン
+
+```bash
+git clone <repository-url>
+cd arxiv-agent
+```
+
+2. 依存関係をインストール
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Configure environment variables
-
-以下の環境変数を設定してください：
+3. 環境変数を設定
 
 ```bash
-export GEMINI_API_KEY="your-gemini-api-key"
-export SLACK_WEBHOOK_URL="your-slack-webhook-url"  # Optional
-export DISCORD_WEBHOOK_URL="your-discord-webhook-url"  # Optional
+cp .env.example .env
 ```
 
-### 3. Configure settings
+`.env`ファイルを編集してAPIキーを設定
 
-`config/default.yaml` を編集して、検索条件や通知設定をカスタマイズできます：
+| 環境変数 | 説明 | 必須 |
+|---------|------|------|
+| `GEMINI_API_KEY` | Gemini APIのAPIキー | はい |
+| `SLACK_WEBHOOK_URL` | Slack Webhook URL | いいえ |
+| `DISCORD_WEBHOOK_URL` | Discord Webhook URL | いいえ |
+
+4. 設定ファイル（config.yaml）を編集
 
 ```yaml
-arxiv:
+search:
   categories:
-    - cs.AI
-    - cs.LG
+    - "cs.AI"
+    - "cs.LG"
   keywords:
-    - LLM
+    - "LLM"
+    - "transformer"
   max_results: 10
 
+summary:
+  prompt_template: |
+    以下の論文を日本語で簡潔に要約してください。
+
+    タイトル: {title}
+
+    概要:
+    {abstract}
+
+    要約は以下の形式で出力してください：
+    - 研究の目的（1-2文）
+    - 手法の概要（1-2文）
+    - 主な結果・貢献（1-2文）
+
 notification:
-  slack:
-    enabled: true
-  discord:
-    enabled: false
+  slack_enabled: false
+  discord_enabled: false
 ```
 
-## Usage
+### 設定項目
 
-### Local execution
+#### search（論文検索）
+
+| 項目 | 型 | 説明 |
+|-----|---|------|
+| `categories` | list[str] | arXivカテゴリ（例: `cs.AI`, `cs.LG`, `cs.CL`） |
+| `keywords` | list[str] | 検索キーワード |
+| `max_results` | int | 取得する論文数（最大100） |
+
+#### summary（要約生成）
+
+| 項目 | 型 | 説明 |
+|-----|---|------|
+| `prompt_template` | str | Gemini APIへのプロンプトテンプレート（`{title}`と`{abstract}`を含む必須） |
+
+#### notification（通知）
+
+| 項目 | 型 | 説明 |
+|-----|---|------|
+| `slack_enabled` | bool | Slack通知を有効にするか |
+| `discord_enabled` | bool | Discord通知を有効にするか |
+
+## 実行
 
 ```bash
-python -m arxiv_agent.main config/default.yaml
+python -m src.main
 ```
 
-### GitHub Actions
+デフォルトでは`config.yaml`を使用します。別の設定ファイルを指定する場合：
 
-GitHub Secretsに以下を設定してください：
+```bash
+python -m src.main custom_config.yaml
+```
 
-- `GEMINI_API_KEY`
-- `SLACK_WEBHOOK_URL` (optional)
-- `DISCORD_WEBHOOK_URL` (optional)
-
-ワークフローは毎日01:00 UTC（JST 10:00）に自動実行されます。手動実行も可能です。
-
-## Project Structure
+## プロジェクト構造
 
 ```
 .
-├── src/arxiv_agent/
-│   ├── config/          # Configuration management
-│   ├── collection/      # arXiv API client
-│   ├── summarization/   # Gemini API client
-│   ├── notification/    # Slack/Discord notifiers
-│   └── utils/           # Utilities
-├── config/
-│   └── default.yaml     # Default configuration
-├── tests/               # Unit tests
-└── .github/workflows/   # GitHub Actions
+├── src/
+│   ├── __init__.py
+│   ├── main.py           # メインエントリポイント
+│   ├── collector.py      # arXiv論文収集
+│   ├── summarizer.py     # Gemini API要約生成
+│   ├── notifier.py       # Slack/Discord通知
+│   ├── config.py        # 設定読み込み
+│   └── models.py         # データモデル
+├── tests/                # テストコード
+│   ├── test_collector.py
+│   ├── test_summarizer.py
+│   ├── test_notifier.py
+│   ├── test_config.py
+│   └── test_models.py
+├── config.yaml           # デフォルト設定ファイル
+├── requirements.txt      # 依存関係
+├── .env.example          # 環境変数サンプル
+└── README.md
 ```
 
-## Testing
+## テスト
+
+全テストを実行：
 
 ```bash
-# Run all tests
-pytest tests/
-
-# Run core tests only (no external API dependencies)
-PYTHONPATH=src pytest tests/test_config_loader.py tests/test_prompt_builder.py -v
+pytest
 ```
 
-**Note**: Some tests may fail on Python 3.13+ due to library compatibility issues. Use Python 3.11-3.12 for full test coverage.
+特定のテストファイルのみ実行：
 
-## License
+```bash
+pytest tests/test_collector.py
+```
 
-MIT
+カバレッジを表示：
+
+```bash
+pytest --cov=src
+```
+
+## arXivカテゴリ一例
+
+| カテゴリ | 説明 |
+|---------|------|
+| `cs.AI` | Artificial Intelligence |
+| `cs.LG` | Machine Learning |
+| `cs.CL` | Computation and Language |
+| `cs.CV` | Computer Vision |
+| `cs.NE` | Neural and Evolutionary Computing |
+| `stat.ML` | Machine Learning (Statistics) |
+
+## ライセンス
+
+MIT License

@@ -1,108 +1,136 @@
-"""Tests for notification orchestrator."""
+import os
+from datetime import datetime, timezone
+
 import pytest
-from unittest.mock import Mock, patch
-from arxiv_agent.notification.notifier import Notifier
-from arxiv_agent.config.models import NotificationConfig, NotificationTarget
-from arxiv_agent.summarization.models import Summary
+import responses
+
+from src.config import NotificationConfig
+from src.models import Paper, SummarizedPaper
+from src.notifier import notify
+
+DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/test"
 
 
-class TestNotifier:
-    """Test cases for Notifier."""
+def _make_summarized_paper(title: str, summary: str) -> SummarizedPaper:
+    paper = Paper(
+        arxiv_id="http://arxiv.org/abs/2501.00001v1",
+        title=title,
+        abstract="abstract",
+        authors=["Alice"],
+        published=datetime(2025, 1, 15, tzinfo=timezone.utc),
+        url="http://arxiv.org/abs/2501.00001v1",
+    )
+    return SummarizedPaper(paper=paper, summary=summary)
 
-    def test_init_with_slack_enabled(self):
-        """Should initialize Slack notifier when enabled."""
-        config = NotificationConfig(
-            slack=NotificationTarget(enabled=True),
-            discord=NotificationTarget(enabled=False),
+
+class TestNotify:
+    @responses.activate
+    def test_sends_to_slack_when_enabled(self, mocker: pytest.fixture) -> None:
+        mocker.patch.dict(
+            os.environ, {"SLACK_WEBHOOK_URL": "https://hooks.slack.com/test"}
+        )
+        responses.add(
+            responses.POST, "https://hooks.slack.com/test", status=200
         )
 
-        with patch.dict('os.environ', {'SLACK_WEBHOOK_URL': 'http://slack.test'}):
-            notifier = Notifier(config)
-            assert len(notifier.notifiers) == 1
-            assert notifier.notifiers[0][0] == 'Slack'
+        config = NotificationConfig(slack_enabled=True, discord_enabled=False)
+        papers = [_make_summarized_paper("Test Paper", "Test summary")]
+        notify(config, papers)
 
-    def test_init_with_discord_enabled(self):
-        """Should initialize Discord notifier when enabled."""
-        config = NotificationConfig(
-            slack=NotificationTarget(enabled=False),
-            discord=NotificationTarget(enabled=True),
+        assert len(responses.calls) == 1
+        assert responses.calls[0].request.url == "https://hooks.slack.com/test"
+
+    @responses.activate
+    def test_sends_to_discord_when_enabled(self, mocker: pytest.fixture) -> None:
+        mocker.patch.dict(
+            os.environ, {"DISCORD_WEBHOOK_URL": "https://discord.com/api/webhooks/test"}
+        )
+        responses.add(
+            responses.POST, "https://discord.com/api/webhooks/test", status=200
         )
 
-        with patch.dict('os.environ', {'DISCORD_WEBHOOK_URL': 'http://discord.test'}):
-            notifier = Notifier(config)
-            assert len(notifier.notifiers) == 1
-            assert notifier.notifiers[0][0] == 'Discord'
+        config = NotificationConfig(slack_enabled=False, discord_enabled=True)
+        papers = [_make_summarized_paper("Test Paper", "Test summary")]
+        notify(config, papers)
 
-    def test_init_with_both_enabled(self):
-        """Should initialize both notifiers when both enabled."""
-        config = NotificationConfig(
-            slack=NotificationTarget(enabled=True),
-            discord=NotificationTarget(enabled=True),
+        assert len(responses.calls) == 1
+
+    def test_does_nothing_when_no_papers(self) -> None:
+        config = NotificationConfig(slack_enabled=True, discord_enabled=True)
+        notify(config, [])
+
+    def test_does_nothing_when_both_disabled(self) -> None:
+        config = NotificationConfig(slack_enabled=False, discord_enabled=False)
+        papers = [_make_summarized_paper("Test Paper", "Test summary")]
+        notify(config, papers)
+
+    def test_raises_when_slack_url_missing(self, mocker: pytest.fixture) -> None:
+        mocker.patch.dict(os.environ, {}, clear=True)
+        config = NotificationConfig(slack_enabled=True, discord_enabled=False)
+        papers = [_make_summarized_paper("Test Paper", "Test summary")]
+
+        with pytest.raises(
+            RuntimeError, match="SLACK_WEBHOOK_URL environment variable is not set"
+        ):
+            notify(config, papers)
+
+    def test_raises_when_discord_url_missing(self, mocker: pytest.fixture) -> None:
+        mocker.patch.dict(os.environ, {}, clear=True)
+        config = NotificationConfig(slack_enabled=False, discord_enabled=True)
+        papers = [_make_summarized_paper("Test Paper", "Test summary")]
+
+        with pytest.raises(
+            RuntimeError, match="DISCORD_WEBHOOK_URL environment variable is not set"
+        ):
+            notify(config, papers)
+
+    @responses.activate
+    def test_sends_to_both_when_both_enabled(self, mocker: pytest.fixture) -> None:
+        mocker.patch.dict(
+            os.environ,
+            {
+                "SLACK_WEBHOOK_URL": "https://hooks.slack.com/test",
+                "DISCORD_WEBHOOK_URL": "https://discord.com/api/webhooks/test",
+            },
+        )
+        responses.add(responses.POST, "https://hooks.slack.com/test", status=200)
+        responses.add(
+            responses.POST, "https://discord.com/api/webhooks/test", status=200
         )
 
-        with patch.dict('os.environ', {
-            'SLACK_WEBHOOK_URL': 'http://slack.test',
-            'DISCORD_WEBHOOK_URL': 'http://discord.test'
-        }):
-            notifier = Notifier(config)
-            assert len(notifier.notifiers) == 2
+        config = NotificationConfig(slack_enabled=True, discord_enabled=True)
+        papers = [_make_summarized_paper("Test Paper", "Test summary")]
+        notify(config, papers)
 
-    def test_init_with_both_disabled(self):
-        """Should initialize with no notifiers when both disabled."""
-        config = NotificationConfig(
-            slack=NotificationTarget(enabled=False),
-            discord=NotificationTarget(enabled=False),
-        )
+        assert len(responses.calls) == 2
 
-        notifier = Notifier(config)
-        assert len(notifier.notifiers) == 0
+    @responses.activate
+    def test_discord_sends_single_message_for_short_content(
+        self, mocker: pytest.fixture
+    ) -> None:
+        mocker.patch.dict(os.environ, {"DISCORD_WEBHOOK_URL": DISCORD_WEBHOOK_URL})
+        responses.add(responses.POST, DISCORD_WEBHOOK_URL, status=200)
 
-    def test_send_all_with_empty_summaries(self):
-        """Should handle empty summaries list."""
-        config = NotificationConfig(
-            slack=NotificationTarget(enabled=True),
-            discord=NotificationTarget(enabled=False),
-        )
+        config = NotificationConfig(slack_enabled=False, discord_enabled=True)
+        papers = [_make_summarized_paper("Short Title", "Short summary")]
+        notify(config, papers)
 
-        with patch.dict('os.environ', {'SLACK_WEBHOOK_URL': 'http://slack.test'}):
-            notifier = Notifier(config)
-            notifier.send_all([])  # Should not raise
+        assert len(responses.calls) == 1
+        body = responses.calls[0].request.body
+        assert body is not None
 
-    def test_send_all_with_no_notifiers(self):
-        """Should handle case with no enabled notifiers."""
-        config = NotificationConfig(
-            slack=NotificationTarget(enabled=False),
-            discord=NotificationTarget(enabled=False),
-        )
+    @responses.activate
+    def test_discord_splits_long_content_into_multiple_messages(
+        self, mocker: pytest.fixture
+    ) -> None:
+        mocker.patch.dict(os.environ, {"DISCORD_WEBHOOK_URL": DISCORD_WEBHOOK_URL})
+        responses.add(responses.POST, DISCORD_WEBHOOK_URL, status=200)
 
-        notifier = Notifier(config)
-        summaries = [
-            Summary(paper_id="1", title="Test", summary_text="Summary")
+        long_summary = "x" * 1500
+        config = NotificationConfig(slack_enabled=False, discord_enabled=True)
+        papers = [
+            _make_summarized_paper(f"Paper {i}", long_summary) for i in range(3)
         ]
-        notifier.send_all(summaries)  # Should not raise
+        notify(config, papers)
 
-    def test_send_all_continues_on_error(self):
-        """Should continue sending to other notifiers if one fails."""
-        config = NotificationConfig(
-            slack=NotificationTarget(enabled=True),
-            discord=NotificationTarget(enabled=True),
-        )
-
-        mock_slack = Mock()
-        mock_slack.send.side_effect = Exception("Slack error")
-        mock_discord = Mock()
-
-        with patch.dict('os.environ', {
-            'SLACK_WEBHOOK_URL': 'http://slack.test',
-            'DISCORD_WEBHOOK_URL': 'http://discord.test'
-        }):
-            notifier = Notifier(config)
-            notifier.notifiers = [('Slack', mock_slack), ('Discord', mock_discord)]
-
-            summaries = [
-                Summary(paper_id="1", title="Test", summary_text="Summary")
-            ]
-            notifier.send_all(summaries)
-
-            mock_slack.send.assert_called_once_with(summaries)
-            mock_discord.send.assert_called_once_with(summaries)
+        assert len(responses.calls) > 1
