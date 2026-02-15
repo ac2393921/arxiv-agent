@@ -40,7 +40,8 @@ def main(config_path: str) -> None:
 
 if __name__ == "__main__":
     try:
-        main("config.yaml")
+        config_path = sys.argv[1] if len(sys.argv) > 1 else "config.yaml"
+        main(config_path)
     except Exception:
         logger.exception("Fatal error in main")
         sys.exit(1)
