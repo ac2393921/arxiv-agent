@@ -187,3 +187,24 @@ notification:
 
         with pytest.raises(ValueError, match="gemini.prompt_template must be a non-empty string"):
             load_config(str(config_file))
+
+    def test_load_default_config(self):
+        """Should successfully load the default configuration file."""
+        default_config_path = Path(__file__).parent.parent / "config" / "default.yaml"
+
+        config = load_config(str(default_config_path))
+
+        assert isinstance(config, Config)
+        assert "cs.AI" in config.arxiv.categories
+        assert "cs.LG" in config.arxiv.categories
+        assert "cs.CL" in config.arxiv.categories
+        assert "cs.SE" in config.arxiv.categories
+        assert len(config.arxiv.categories) == 4
+
+        assert "LLM" in config.arxiv.keywords
+        assert "Software Architecture" in config.arxiv.keywords
+        assert "Clean Code" in config.arxiv.keywords
+        assert "Test-Driven Development" in config.arxiv.keywords
+        assert len(config.arxiv.keywords) == 26
+
+        assert config.arxiv.max_results == 10

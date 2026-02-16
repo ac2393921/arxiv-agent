@@ -3,12 +3,39 @@ arxiv:
     - cs.AI
     - cs.LG
     - cs.CL
+    - cs.SE
   keywords:
+    # LLM関連
     - LLM
     - Large Language Model
     - GPT
     - Transformer
-  max_results: 5
+    # ソフトウェアアーキテクチャ
+    - Software Architecture
+    - Microservices
+    - Design Patterns
+    - Clean Architecture
+    - Domain-Driven Design
+    - DDD
+    - Hexagonal Architecture
+    # コード品質・リファクタリング
+    - Code Quality
+    - Clean Code
+    - Refactoring
+    - Technical Debt
+    - Code Smell
+    - Encapsulation
+    - SOLID
+    - Coupling
+    - Cohesion
+    # テスト・開発手法
+    - Test-Driven Development
+    - TDD
+    - Behavior-Driven Development
+    - BDD
+    - Unit Testing
+    - Integration Testing
+  max_results: 10
 
 gemini:
   model: gemini-pro

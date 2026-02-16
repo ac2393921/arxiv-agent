@@ -45,3 +45,21 @@ class TestArxivClient:
         client = ArxivClient(max_results=10)
         with pytest.raises(ValueError, match="keywords must not be empty"):
             client.search_papers(['cs.AI'], [])
+
+    def test_build_query_with_expanded_categories_and_keywords(self):
+        """Should build query correctly with expanded categories and keywords."""
+        client = ArxivClient(max_results=10)
+        categories = ['cs.AI', 'cs.LG', 'cs.CL', 'cs.SE']
+        keywords = [
+            'LLM', 'Software Architecture', 'Clean Code',
+            'Test-Driven Development', 'Domain-Driven Design'
+        ]
+        query = client._build_query(categories, keywords)
+
+        assert '(cat:cs.AI OR cat:cs.LG OR cat:cs.CL OR cat:cs.SE)' in query
+        assert 'all:"LLM"' in query
+        assert 'all:"Software Architecture"' in query
+        assert 'all:"Clean Code"' in query
+        assert 'all:"Test-Driven Development"' in query
+        assert 'all:"Domain-Driven Design"' in query
+        assert query.count(' OR ') == 7  # 3 for categories + 4 for keywords
