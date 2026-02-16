@@ -21,7 +21,7 @@ def _make_app_config() -> AppConfig:
             max_results=5,
         ),
         summary=SummaryConfig(
-            prompt_template="Title: {title}\nAbstract: {abstract}\nSummarize.",
+            prompt_template="Title: {title}\nAuthors: {authors}\nAbstract: {abstract}\nSummarize.",
         ),
         notification=NotificationConfig(
             slack_enabled=False,

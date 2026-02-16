@@ -23,6 +23,7 @@ search:
 summary:
   prompt_template: |
     タイトル: {title}
+    著者: {authors}
     概要: {abstract}
 
 notification:
@@ -61,7 +62,9 @@ class TestSearchConfig:
 
 class TestSummaryConfig:
     def test_valid_config(self) -> None:
-        config = SummaryConfig(prompt_template="Title: {title}\nAbstract: {abstract}")
+        config = SummaryConfig(
+            prompt_template="Title: {title}\nAuthors: {authors}\nAbstract: {abstract}"
+        )
         assert "{title}" in config.prompt_template
 
     def test_empty_template_raises(self) -> None:
@@ -70,13 +73,17 @@ class TestSummaryConfig:
 
     def test_missing_title_placeholder_raises(self) -> None:
         with pytest.raises(ValueError, match="prompt_template must contain {title}"):
-            SummaryConfig(prompt_template="Abstract: {abstract}")
+            SummaryConfig(prompt_template="Authors: {authors}\nAbstract: {abstract}")
+
+    def test_missing_authors_placeholder_raises(self) -> None:
+        with pytest.raises(ValueError, match="prompt_template must contain {authors}"):
+            SummaryConfig(prompt_template="Title: {title}\nAbstract: {abstract}")
 
     def test_missing_abstract_placeholder_raises(self) -> None:
         with pytest.raises(
             ValueError, match="prompt_template must contain {abstract}"
         ):
-            SummaryConfig(prompt_template="Title: {title}")
+            SummaryConfig(prompt_template="Title: {title}\nAuthors: {authors}")
 
 
 class TestNotificationConfig:
@@ -108,7 +115,7 @@ class TestLoadConfig:
     def test_missing_search_section_raises(self) -> None:
         yaml_content = """\
 summary:
-  prompt_template: "{title} {abstract}"
+  prompt_template: "{title} {authors} {abstract}"
 notification:
   slack_enabled: false
   discord_enabled: false
@@ -152,7 +159,7 @@ search:
   keywords: ["LLM"]
   max_results: 10
 summary:
-  prompt_template: "{title} {abstract}"
+  prompt_template: "{title} {authors} {abstract}"
 """
         with tempfile.NamedTemporaryFile(
             mode="w", suffix=".yaml", delete=False
