@@ -42,8 +42,10 @@ def summarize_papers(
         if i > 0:
             time.sleep(REQUEST_INTERVAL_SECONDS)
 
+        authors_str = ", ".join(paper.authors)
         prompt = config.prompt_template.format(
             title=paper.title,
+            authors=authors_str,
             abstract=paper.abstract,
         )
         summary_text = _call_gemini(client, prompt)

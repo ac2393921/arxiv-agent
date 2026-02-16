@@ -21,7 +21,7 @@ def _make_paper(title: str, abstract: str) -> Paper:
 
 
 SUMMARY_CONFIG = SummaryConfig(
-    prompt_template="Title: {title}\nAbstract: {abstract}\nSummarize in Japanese.",
+    prompt_template="Title: {title}\nAuthors: {authors}\nAbstract: {abstract}\nSummarize in Japanese.",
 )
 
 
@@ -87,6 +87,7 @@ class TestSummarizePapers:
         call_args = mock_client.models.generate_content.call_args
         prompt = call_args.kwargs["contents"]
         assert "My Title" in prompt
+        assert "Alice" in prompt
         assert "My Abstract" in prompt
 
     def test_raises_when_gemini_returns_empty_response(

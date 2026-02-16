@@ -27,6 +27,8 @@ class SummaryConfig:
             raise ValueError("prompt_template is required")
         if "{title}" not in self.prompt_template:
             raise ValueError("prompt_template must contain {title}")
+        if "{authors}" not in self.prompt_template:
+            raise ValueError("prompt_template must contain {authors}")
         if "{abstract}" not in self.prompt_template:
             raise ValueError("prompt_template must contain {abstract}")
 
